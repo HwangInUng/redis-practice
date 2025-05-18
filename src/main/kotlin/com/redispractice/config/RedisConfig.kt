@@ -1,5 +1,9 @@
 package com.redispractice.config
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.redispractice.domain.entity.User
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -13,6 +17,7 @@ class RedisConfig {
 
     // Bean을 User 타입으로만 지정하는 경우 범용성이 떨어짐
     // 이 부분을 해결하기 위해서는 Any 타입으로 지정하는 방법이 있음.
+    // 해당 코드는 예제에서 미사용
     @Bean
     fun redisTemplateForUser(connectionFactory: RedisConnectionFactory): RedisTemplate<String, User> {
         val template = RedisTemplate<String, User>()
@@ -32,10 +37,29 @@ class RedisConfig {
     fun redisTemplate(connectionFactory: RedisConnectionFactory): RedisTemplate<String, Any> {
         val template = RedisTemplate<String, Any>()
         template.connectionFactory = connectionFactory
+
         template.keySerializer = StringRedisSerializer()
+        template.hashKeySerializer = StringRedisSerializer()
+
         template.valueSerializer = Jackson2JsonRedisSerializer(Any::class.java)
+        template.hashValueSerializer = Jackson2JsonRedisSerializer(Any::class.java)
 
         return template
+    }
+
+    @Bean
+    fun objectMapper(): ObjectMapper {
+        return ObjectMapper().apply {
+            // Kotlin 데이터 클래스를 제대로 처리할 수 있도록 KotlinModule을 등록
+            registerModule(KotlinModule.Builder().build())
+            activateDefaultTyping(
+                BasicPolymorphicTypeValidator.builder() // 역직렬화 시 허용할 서브타입을 검증
+                    .allowIfSubType("com.redispractice") // 안전한 도메인 지정
+                    .build(),
+                ObjectMapper.DefaultTyping.NON_FINAL, // Kotlin 클래스가 기본적으로 final이 아니기 때문에 적합한 설정
+                JsonTypeInfo.As.PROPERTY // 직렬화된 JSON에 @class와 같은 속성이 추가
+            )
+        }
     }
 
     // 이런 문제를 원초적으로 해결하기 위해서는 Redis를 구현하는 Repository<T>를 만들어 도메인 타입별 구현체 생성
