@@ -17,8 +17,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 @ExtendWith(MockitoExtension::class)
-// PER_CLASS는 모든 테스트에서 공유되는 인스턴스를 사용
-// PER_METHOD는 각 테스트마다 새로운 인스턴스를 생성
+// PER_CLASS는 모든 테스트에서 공유되는 인스턴스를 사용하기 때문에 각 테스트 케이스에서 의도하지 않은 상태를 공유할 수 있음
+// 메서드마다 상태가 초기화되어야 한다면 PER_METHOD를 사용하여 각 테스트마다 새로운 인스턴스를 생성
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ReaderBoardServiceTest {
     @InjectMocks
@@ -27,6 +27,10 @@ class ReaderBoardServiceTest {
     @Mock(lenient = true)
     private lateinit var readerBoardRepository: ReaderBoardRepository
 
+    // Kotlin에서 @Nested를 사용하려면 inner class를 반드시 명시
+    // Kotlin의 중첩 클래스는 기본적으로 static이기 때문에 외부 클래스의 인스턴에서 접근 불가능
+    // 이를 해결하기 위해 inner class를 사용하여 명시적으로 외부 클래스에 접근할 수 있도록 지정이 필요
+    // 추가로 생명주기에 문제없도록 동작하기 위해 @TestInstance를 사용하여 테스트 인스턴스를 생성
     @Nested
     @DisplayName("리더보드 점수 등록")
     inner class RegisterScore {
