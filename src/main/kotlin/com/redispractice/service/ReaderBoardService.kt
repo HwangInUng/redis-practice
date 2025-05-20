@@ -13,4 +13,14 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
 
         return "${savedCount}명의 점수 등록 성공";
     }
+
+    fun updateScore(updatedPlayer: ReaderBoardPlayer): String {
+        val result = readerBoardRepository.updateScore(updatedPlayer)
+
+        if (result == false) {
+            throw RuntimeException("서버 내부에서 오류가 발생했습니다.")
+        }
+
+        return "${updatedPlayer.name}의 점수 수정 성공"
+    }
 }

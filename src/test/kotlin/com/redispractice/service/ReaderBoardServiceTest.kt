@@ -75,4 +75,44 @@ class ReaderBoardServiceTest {
             assertEquals(expected, ex.message)
         }
     }
+
+    @Nested
+    @DisplayName("리더보드 점수 수정")
+    inner class UpdateScore {
+
+        @Test
+        @DisplayName("특정 사용자의 점수를 수정")
+        fun updateScore() {
+            // given
+            val player = ReaderBoardPlayer(1L, "player1", 100)
+            val updatedPlayer = player.copy(score = 200)
+
+            // when
+            Mockito.`when`(readerBoardRepository.updateScore(updatedPlayer)).thenReturn(true)
+
+            // then
+            val result = readerBoardService.updateScore(updatedPlayer);
+            val expected = "${updatedPlayer.name}의 점수 수정 성공"
+            assertEquals(expected, result);
+        }
+
+        @Test
+        @DisplayName("네트워크 오류 등 비정상 상황에서 예외 발생")
+        fun updateScoreInternalException () {
+            // given
+            val player = ReaderBoardPlayer(1L, "player1", 100)
+            val updatedPlayer = player.copy(score = 200)
+
+            // when
+            Mockito.`when`(readerBoardRepository.updateScore(updatedPlayer)).thenReturn(false)
+
+            // then
+            val ex = assertFailsWith<RuntimeException> {
+                readerBoardService.updateScore(updatedPlayer)
+            }
+
+            val expected = "서버 내부에서 오류가 발생했습니다."
+            assertEquals(expected, ex.message)
+        }
+    }
 }

@@ -6,7 +6,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 class ReaderBoardRepository(
-    private val redisTemplate: RedisTemplate<String ,String>
+    private val redisTemplate: RedisTemplate<String, String>
 ) {
 
     fun saveAll(userAndScoreList: List<ReaderBoardPlayer>): Int {
@@ -16,5 +16,14 @@ class ReaderBoardRepository(
         }
 
         return redisTemplate.opsForZSet().size("reader-board:$currentDate")?.toInt() ?: 0
+    }
+
+    fun updateScore(updatedPlayer: ReaderBoardPlayer): Boolean {
+        val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+
+        redisTemplate.opsForZSet()
+            .add("reader-board:$currentDate", updatedPlayer.name, updatedPlayer.score.toDouble()) ?: return false
+
+        return true
     }
 }
