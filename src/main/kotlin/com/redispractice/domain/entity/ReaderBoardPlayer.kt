@@ -1,7 +1,7 @@
 package com.redispractice.domain.entity
 
 data class ReaderBoardPlayer(
-    val id: String,
+    val id: Long,
+    val name: String,
     val score: Int,
-    val rank: Int,
 )
