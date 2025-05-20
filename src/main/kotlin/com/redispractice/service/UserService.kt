@@ -2,7 +2,6 @@ package com.redispractice.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.redispractice.domain.entity.User
-import lombok.RequiredArgsConstructor
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 
