@@ -4,6 +4,7 @@ import com.redispractice.domain.entity.ReaderBoardPlayer
 import com.redispractice.repository.ReaderBoardRepository
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -15,6 +16,7 @@ import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 @ExtendWith(MockitoExtension::class)
 // PER_CLASS는 모든 테스트에서 공유되는 인스턴스를 사용하기 때문에 각 테스트 케이스에서 의도하지 않은 상태를 공유할 수 있음
@@ -27,6 +29,14 @@ class ReaderBoardServiceTest {
     @Mock(lenient = true)
     private lateinit var readerBoardRepository: ReaderBoardRepository
 
+    private fun createUserAndScoreList(): List<ReaderBoardPlayer> = listOf(
+        ReaderBoardPlayer(1L, "player1", 100),
+        ReaderBoardPlayer(2L, "player2", 90),
+        ReaderBoardPlayer(3L, "player3", 130)
+    )
+
+    fun createUserAndScore(score: Int): ReaderBoardPlayer = ReaderBoardPlayer(1L, "player1", 100)
+
     // Kotlin에서 @Nested를 사용하려면 inner class를 반드시 명시
     // Kotlin의 중첩 클래스는 기본적으로 static이기 때문에 외부 클래스의 인스턴에서 접근 불가능
     // 이를 해결하기 위해 inner class를 사용하여 명시적으로 외부 클래스에 접근할 수 있도록 지정이 필요
@@ -34,15 +44,12 @@ class ReaderBoardServiceTest {
     @Nested
     @DisplayName("리더보드 점수 등록")
     inner class RegisterScore {
+
         @Test
         @DisplayName("리더보드 사용자의 점수를 등록")
         fun registUserAndScore() {
             // given
-            val userAndScoreList = listOf(
-                ReaderBoardPlayer(1L, "player1", 100),
-                ReaderBoardPlayer(2L, "player2", 90),
-                ReaderBoardPlayer(3L, "player3", 130),
-            )
+            val userAndScoreList = createUserAndScoreList()
 
             // when
             Mockito.`when`(readerBoardRepository.saveAll(userAndScoreList)).thenReturn(userAndScoreList.size)
@@ -57,11 +64,7 @@ class ReaderBoardServiceTest {
         @Test
         fun registerScoreIsNotSameCountThenException() {
             // given
-            val userAndScoreList = listOf(
-                ReaderBoardPlayer(1L, "player1", 100),
-                ReaderBoardPlayer(2L, "player2", 90),
-                ReaderBoardPlayer(3L, "player3", 130),
-            )
+            val userAndScoreList = createUserAndScoreList()
 
             // when
             Mockito.`when`(readerBoardRepository.saveAll(userAndScoreList)).thenReturn(userAndScoreList.size - 1)
@@ -80,12 +83,12 @@ class ReaderBoardServiceTest {
     @DisplayName("리더보드 점수 수정")
     inner class UpdateScore {
 
+
         @Test
         @DisplayName("특정 사용자의 점수를 수정")
         fun updateScore() {
             // given
-            val player = ReaderBoardPlayer(1L, "player1", 100)
-            val updatedPlayer = player.copy(score = 200)
+            val updatedPlayer = createUserAndScore(200)
 
             // when
             Mockito.`when`(readerBoardRepository.updateScore(updatedPlayer)).thenReturn(true)
@@ -98,10 +101,9 @@ class ReaderBoardServiceTest {
 
         @Test
         @DisplayName("네트워크 오류 등 비정상 상황에서 예외 발생")
-        fun updateScoreInternalException () {
+        fun updateScoreInternalException() {
             // given
-            val player = ReaderBoardPlayer(1L, "player1", 100)
-            val updatedPlayer = player.copy(score = 200)
+            val updatedPlayer = createUserAndScore(300)
 
             // when
             Mockito.`when`(readerBoardRepository.updateScore(updatedPlayer)).thenReturn(false)
@@ -114,5 +116,35 @@ class ReaderBoardServiceTest {
             val expected = "서버 내부에서 오류가 발생했습니다."
             assertEquals(expected, ex.message)
         }
+    }
+
+    @Test
+    @DisplayName("스코어가 가장 높은 상위 5명을 조회")
+    fun getTop5Scores() {
+        // given
+        val key = "reader-board:20231001"
+        val sortedUserAndScoreListDesc = createUserAndScoreList().sortedWith(compareByDescending { it.score })
+
+        // when
+        Mockito.`when`(readerBoardRepository.getTop5Scores(key)).thenReturn(sortedUserAndScoreListDesc)
+
+        // then
+        val result = readerBoardService.getTop5Scores(key)
+        assertTrue(result.get(0).score >= result.get(result.size - 1).score)
+    }
+
+    @Test
+    @DisplayName("스코어가 가장 낮은 하위 5명을 조회하며")
+    fun getBottomTop5Scores() {
+        // given
+        val key = "reader-board:20231001"
+        val sortedUserAndScoreListAsc = createUserAndScoreList().sortedWith(compareBy { it.score })
+
+        // when
+        Mockito.`when`(readerBoardRepository.getBottom5Scores(key)).thenReturn(sortedUserAndScoreListAsc)
+
+        // then
+        val result = readerBoardService.getBottom5Scores(key)
+        assertTrue(result.get(0).score <= result.get(result.size - 1).score)
     }
 }

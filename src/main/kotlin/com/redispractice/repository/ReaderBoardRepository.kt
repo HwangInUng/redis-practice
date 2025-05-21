@@ -21,9 +21,17 @@ class ReaderBoardRepository(
     fun updateScore(updatedPlayer: ReaderBoardPlayer): Boolean {
         val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
 
-        redisTemplate.opsForZSet()
-            .add("reader-board:$currentDate", updatedPlayer.name, updatedPlayer.score.toDouble()) ?: return false
+        return redisTemplate.opsForZSet()
+            .add("reader-board:$currentDate", updatedPlayer.name, updatedPlayer.score.toDouble()) ?: false
+    }
 
-        return true
+    fun getTop5Scores(key: String): List<ReaderBoardPlayer> {
+        val topPlayers = redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, 4)
+        return topPlayers?.map { ReaderBoardPlayer(0, it.value.toString(), it.score?.toInt() ?: 0) } ?: emptyList()
+    }
+
+    fun getBottom5Scores(key: String): List<ReaderBoardPlayer> {
+        val bottomPlayers = redisTemplate.opsForZSet().rangeWithScores(key, 0, 4)
+        return bottomPlayers?.map { ReaderBoardPlayer(0, it.value.toString(), it.score?.toInt() ?: 0) } ?: emptyList()
     }
 }

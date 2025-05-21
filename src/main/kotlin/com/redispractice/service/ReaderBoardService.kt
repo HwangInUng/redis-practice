@@ -17,10 +17,18 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
     fun updateScore(updatedPlayer: ReaderBoardPlayer): String {
         val result = readerBoardRepository.updateScore(updatedPlayer)
 
-        if (result == false) {
+        if (!result) {
             throw RuntimeException("서버 내부에서 오류가 발생했습니다.")
         }
 
         return "${updatedPlayer.name}의 점수 수정 성공"
+    }
+
+    fun getTop5Scores(key: String): List<ReaderBoardPlayer> {
+        return readerBoardRepository.getTop5Scores(key)
+    }
+
+    fun getBottom5Scores(key: String): List<ReaderBoardPlayer> {
+        return readerBoardRepository.getBottom5Scores(key)
     }
 }
