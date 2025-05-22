@@ -3,11 +3,12 @@ package com.redispractice.service
 import com.redispractice.domain.entity.ReaderBoardPlayer
 import com.redispractice.repository.ReaderBoardRepository
 
-class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepository) {
+class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepository<ReaderBoardPlayer>) {
     fun registerAll(userAndScoreList: List<ReaderBoardPlayer>): String {
-        val savedCount = readerBoardRepository.saveAll(userAndScoreList)
+        val key = "reader-board:test"
+        val savedCount = readerBoardRepository.addAll(key, userAndScoreList) { it.score.toDouble() }
 
-        if (savedCount != userAndScoreList.size) {
+        if (savedCount == 0L) {
             throw RuntimeException("요청 데이터 중 일부가 누락되어 저장에 실패 하였습니다.")
         }
 
@@ -15,9 +16,9 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
     }
 
     fun updateScore(updatedPlayer: ReaderBoardPlayer): String {
-        val result = readerBoardRepository.updateScore(updatedPlayer)
+        val result = readerBoardRepository.increment("", updatedPlayer.name, 0.0)
 
-        if (!result) {
+        if (result != 0.0) {
             throw RuntimeException("서버 내부에서 오류가 발생했습니다.")
         }
 
@@ -25,10 +26,10 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
     }
 
     fun getTop5Scores(key: String): List<ReaderBoardPlayer> {
-        return readerBoardRepository.getTop5Scores(key)
+        return readerBoardRepository.top(key, 5)
     }
 
     fun getBottom5Scores(key: String): List<ReaderBoardPlayer> {
-        return readerBoardRepository.getBottom5Scores(key)
+        return readerBoardRepository.bottom(key, 5)
     }
 }
