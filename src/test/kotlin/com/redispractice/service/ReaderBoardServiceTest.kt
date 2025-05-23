@@ -7,7 +7,7 @@ import com.redispractice.exception.ExceptionMessages
 import com.redispractice.exception.NoWriteTestMethodException
 import com.redispractice.fixtures.ReaderBoardPlayerFixtures
 import com.redispractice.repository.ReaderBoardRepository
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -57,7 +57,7 @@ class ReaderBoardServiceTest {
 
             // then
             val expected = ExceptionMessages.EMPTY_INPUT
-            assertTrue(actual.message!!.contains(expected))
+            assertEquals(expected, actual.message)
         }
 
         @Test
@@ -76,7 +76,7 @@ class ReaderBoardServiceTest {
 
             // then
             val expected = ExceptionMessages.isBlankName(blankId)
-            assertTrue(actual.message!!.contains(expected))
+            assertEquals(expected, actual.message)
         }
 
         @Test
@@ -93,11 +93,11 @@ class ReaderBoardServiceTest {
             // then
             val expected = ExceptionMessages.someRegisterFailed("점수")
             assertEquals(HttpStatus.BAD_REQUEST, ex.status)
-            assertTrue(ex.message.contains(expected))
+            assertEquals(expected, ex.message)
         }
 
         @Test
-        @DisplayName("사용자 점수 등록")
+        @DisplayName("사용자 점수 등록 후 반환받은 값이 인자로 전달된 List의 크기와 같으면 성공 후 메세지 반환")
         fun registerUserScores() {
             // given
             val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150))
@@ -109,7 +109,7 @@ class ReaderBoardServiceTest {
 
             // then
             val expected = SuccessMessages.registerSuccess("점수")
-            assertTrue(result.contains(expected))
+            assertEquals(expected, result)
         }
     }
 
