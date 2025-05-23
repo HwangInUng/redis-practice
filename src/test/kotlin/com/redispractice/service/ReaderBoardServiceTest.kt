@@ -131,14 +131,14 @@ class ReaderBoardServiceTest {
         }
 
         @Test
-        @DisplayName("수정 대상이 존재하지 않아 0을 반환하면 ApiException 예외 발생")
-        fun redisServerInternalErrorThrowsApiException() {
+        @DisplayName("수정 대상이 존재하지 않아도 null을 반환하면 ApiException 예외 발생")
+        fun notExistsUpdateTargetThrowsApiException() {
             // given
             val userScore = ReaderBoardPlayer(1L, "player1", 100)
 
             // when
-            Mockito.`when`(readerBoardRepository.increment(eq(key), eq(userScore.name), any()))
-                .thenReturn(0.0)
+            Mockito.`when`(readerBoardRepository.score(eq(key), eq(userScore.name)))
+                .thenReturn(null)
             val ex = assertFailsWith<ApiException> { sut.updateScore(userScore) }
 
             // then

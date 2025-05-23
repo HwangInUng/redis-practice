@@ -28,11 +28,12 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
     fun updateScore(updatedPlayer: ReaderBoardPlayer): String {
         require(updatedPlayer.name.isNotBlank()) { ExceptionMessages.isBlankName(updatedPlayer.id) }
 
-        val result = readerBoardRepository.increment(key, updatedPlayer.name, 0.0)
-
-        if (result == 0.0) {
-            throw ApiException(HttpStatus.BAD_REQUEST, ExceptionMessages.updateEntityNotExist("점수"))
-        }
+        readerBoardRepository.score(key, updatedPlayer.name) ?: throw ApiException(
+            HttpStatus.BAD_REQUEST,
+            ExceptionMessages.updateEntityNotExist("점수")
+        )
+        // 실제로는 수정 대상이 없어도 새로 데이터가 추가되지만 실습을 위한 조건 추가
+        readerBoardRepository.increment(key, updatedPlayer.name, updatedPlayer.score.toDouble())
 
         return SuccessMessages.updateSuccess("점수")
     }
