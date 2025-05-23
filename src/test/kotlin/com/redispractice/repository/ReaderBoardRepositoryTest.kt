@@ -3,10 +3,12 @@ package com.redispractice.repository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.redispractice.domain.entity.ReaderBoardPlayer
 import com.redispractice.fixtures.ReaderBoardPlayerFixtures
-import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,7 +29,7 @@ class ReaderBoardRepositoryTest {
             ReaderBoardRepository(redisTemplate, ObjectMapper(), ReaderBoardPlayer::class.java)
     }
 
-    @AfterAll
+    @AfterEach
     fun tearDown() {
         println("Removed test keys")
         redisTemplate.delete(key)
@@ -53,7 +55,7 @@ class ReaderBoardRepositoryTest {
         val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 130))
 
         // when
-        val result = readerBoardRepository.addAll(key, userScoreList) { it.score.toDouble() }
+        val result = readerBoardRepository.addAll(key, userScoreList, { it.name }, { it.score.toDouble() })
 
         // then
         val expected = userScoreList.size.toLong()
@@ -74,5 +76,73 @@ class ReaderBoardRepositoryTest {
         // then
         val expected = readerBoardPlayer.score + updateScore
         assertEquals(expected, result)
+    }
+
+    @Test
+    @DisplayName("사용자 삭제")
+    fun deleteUser() {
+        // given
+        val readerBoardPlayerList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 130))
+        readerBoardRepository.addAll(key, readerBoardPlayerList, { it.name }, { it.score.toDouble() })
+
+        // when
+        val result = readerBoardRepository.delete(key, readerBoardPlayerList[1].name)
+
+        // then
+        val expected = 1L
+        assertEquals(expected, result)
+    }
+
+    @Nested
+    @DisplayName("리더보드 점수 조회")
+    inner class GetReaderBoardScore {
+        private val scoreList = listOf(100, 90, 130, 110, 120, 140)
+
+        @BeforeEach
+        fun setUp() {
+            val userScoreList = ReaderBoardPlayerFixtures.createList(scoreList)
+            readerBoardRepository.addAll(key, userScoreList, { it.name }, { it.score.toDouble() })
+        }
+
+        @Test
+        @DisplayName("상위 점수 조회")
+        fun getTop5Scores() {
+            // given
+            val count = 5L
+
+            // when
+            val result = readerBoardRepository.top(key, count)
+            assertEquals(count, result.size.toLong())
+
+            val topScores = result.map { it.second }
+
+            // then
+            val expectedMax = scoreList.maxBy { it }
+            val expectedMin = scoreList.minBy { it }
+
+            assertEquals(expectedMax.toDouble(), topScores.first())
+            assertFalse(topScores.contains(expectedMin.toDouble()))
+        }
+
+        @Test
+        @DisplayName("하위 점수 조회")
+        fun getBottom5Scores() {
+            // given
+            val count = 3L
+
+            // when
+            val result = readerBoardRepository.bottom(key, count)
+
+            // then
+            assertEquals(count, result.size.toLong())
+
+            val bottomScores = result.map { it.second }
+
+            val expectedMax = scoreList.maxBy { it }
+            val expectedMin = scoreList.minBy { it }
+
+            assertEquals(expectedMin.toDouble(), bottomScores.first().toDouble())
+            assertFalse(bottomScores.contains(expectedMax.toDouble()))
+        }
     }
 }

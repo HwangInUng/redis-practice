@@ -1,18 +1,28 @@
 package com.redispractice.service
 
+import com.redispractice.common.SuccessMessages
 import com.redispractice.domain.entity.ReaderBoardPlayer
+import com.redispractice.exception.ApiException
+import com.redispractice.exception.ExceptionMessages
 import com.redispractice.repository.ReaderBoardRepository
+import org.springframework.http.HttpStatus
 
 class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepository<ReaderBoardPlayer>) {
-    fun registerAll(userAndScoreList: List<ReaderBoardPlayer>): String {
-        val key = "reader-board:test"
-        val savedCount = readerBoardRepository.addAll(key, userAndScoreList) { it.score.toDouble() }
+    private val key = "reader-board:test"
 
-        if (savedCount == 0L) {
-            throw RuntimeException("요청 데이터 중 일부가 누락되어 저장에 실패 하였습니다.")
+    fun registerAll(userAndScoreList: List<ReaderBoardPlayer>): String {
+        require(userAndScoreList.isNotEmpty()) { ExceptionMessages.EMPTY_INPUT }
+        userAndScoreList.forEach {
+            require(it.name.isNotBlank()) { ExceptionMessages.isBlankName(it.id) }
         }
 
-        return "${savedCount}명의 점수 등록 성공";
+        val result = readerBoardRepository.addAll(key, userAndScoreList, { it.name }, { it.score.toDouble() })
+
+        if (result != userAndScoreList.size.toLong()) {
+            throw ApiException(HttpStatus.BAD_REQUEST, ExceptionMessages.someRegisterFailed("점수"))
+        }
+
+        return SuccessMessages.registerSuccess("점수");
     }
 
     fun updateScore(updatedPlayer: ReaderBoardPlayer): String {
@@ -25,11 +35,11 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
         return "${updatedPlayer.name}의 점수 수정 성공"
     }
 
-    fun getTop5Scores(key: String): List<ReaderBoardPlayer> {
-        return readerBoardRepository.top(key, 5)
+    fun getTop5Scores(key: String): List<String> {
+        return listOf("")
     }
 
-    fun getBottom5Scores(key: String): List<ReaderBoardPlayer> {
-        return readerBoardRepository.bottom(key, 5)
+    fun getBottom5Scores(key: String): List<String> {
+        return listOf("")
     }
 }

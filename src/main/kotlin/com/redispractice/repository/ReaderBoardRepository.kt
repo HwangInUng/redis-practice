@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.redispractice.domain.entity.ReaderBoardPlayer
 import org.springframework.data.redis.core.DefaultTypedTuple
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -31,32 +32,32 @@ class ReaderBoardRepository<T : Any>(
     fun <T : Any> addAll(
         key: String,
         values: List<T>,
-        scoreSelector: (T) -> Double
+        nameSelector: (T) -> String,
+        scoreSelector: (T) -> Double,
     ): Long {
         val tuples = values.map {
-            val json = objectMapper.writeValueAsString(it)
-            DefaultTypedTuple(json, scoreSelector(it))
+            DefaultTypedTuple(nameSelector(it), scoreSelector(it))
         }.toSet()
 
         return redisTemplate.opsForZSet().add(key, tuples) ?: 0
     }
 
-    fun delete(key: String, value: T): Long {
-        return ops.remove(key, serialize(value)) ?: 0
+    fun delete(key: String, value: String): Long {
+        return ops.remove(key, value) ?: 0
     }
 
     fun increment(key: String, value: String, delta: Double): Double {
         return ops.incrementScore(key, value, delta) ?: 0.0
     }
 
-    fun top(key: String, count: Long): List<T> {
+    fun top(key: String, count: Long): List<Pair<String?, Double>> {
         return ops.reverseRangeWithScores(key, 0, count - 1)
-            ?.map { deserialize(it.value.toString()) } ?: emptyList()
+            ?.map { it.value to (it.score ?: 0.0) } ?: emptyList()
     }
 
-    fun bottom(key: String, count: Long): List<T> {
+    fun bottom(key: String, count: Long): List<Pair<String?, Double>> {
         return ops.rangeWithScores(key, 0, count - 1)
-            ?.map { deserialize(it.value.toString()) } ?: emptyList()
+            ?.map { it.value to (it.score ?: 0.0) } ?: emptyList()
     }
 
     fun size(key: String): Long {
