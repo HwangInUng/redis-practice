@@ -94,8 +94,8 @@ class ReaderBoardRepositoryTest {
     }
 
     @Nested
-    @DisplayName("리더보드 점수 조회")
-    inner class GetReaderBoardScore {
+    @DisplayName("리더보드 범위 점수 조회")
+    inner class GetReaderBoardRangeScore {
         private val scoreList = listOf(100, 90, 130, 110, 120, 140)
 
         @BeforeEach
@@ -143,6 +143,39 @@ class ReaderBoardRepositoryTest {
 
             assertEquals(expectedMin.toDouble(), bottomScores.first().toDouble())
             assertFalse(bottomScores.contains(expectedMax.toDouble()))
+        }
+    }
+
+    @Nested
+    @DisplayName("리더보드 점수 조회")
+    inner class GetReaderBoardScore {
+        @Test
+        @DisplayName("점수 조회 대상이 존재하지 않는 경우 null 반환")
+        fun notExistsMemberThenReturnNull() {
+            // given
+            val userScore = ReaderBoardPlayer(1L, "player1", 100)
+            val otherUser = "player2"
+
+            // when
+            readerBoardRepository.add(key, userScore.name, userScore.score.toDouble())
+            val result = readerBoardRepository.score(key, otherUser)
+
+            // then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("점수 조회 대상이 존재하는 경우 해당 점수 반환")
+        fun existsMemberThenReturnScore() {
+            // given
+            val userScore = ReaderBoardPlayer(1L, "player1", 100)
+
+            // when
+            readerBoardRepository.add(key, userScore.name, userScore.score.toDouble())
+            val result = readerBoardRepository.score(key, userScore.name)
+
+            // then
+            assertEquals(userScore.score.toDouble(), result)
         }
     }
 }
