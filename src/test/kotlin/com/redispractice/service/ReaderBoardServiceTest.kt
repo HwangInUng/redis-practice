@@ -7,7 +7,6 @@ import com.redispractice.exception.ExceptionMessages
 import com.redispractice.exception.NoWriteTestMethodException
 import com.redispractice.fixtures.ReaderBoardPlayerFixtures
 import com.redispractice.repository.ReaderBoardRepository
-import org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -118,15 +117,52 @@ class ReaderBoardServiceTest {
     inner class UpdateScore {
 
         @Test
-        @DisplayName("특정 사용자의 점수를 수정")
-        fun test1() {
-            throw NoWriteTestMethodException()
+        @DisplayName("사용자의 이름이 blank인 경우 IllegalArgumentException 발생")
+        fun userNameIsBlankThrowsIllegalArgumentException() {
+            // given
+            val userScore = ReaderBoardPlayer(1L, "", 100)
+
+            // when
+            val actual = assertFailsWith<IllegalArgumentException> { sut.updateScore(userScore) }
+
+            // then
+            val expected = ExceptionMessages.isBlankName(userScore.id)
+            assertEquals(expected, actual.message)
         }
 
         @Test
-        @DisplayName("내부 오류로 인해 null을 반환하면 예외 발생")
-        fun test2() {
-            throw NoWriteTestMethodException()
+        @DisplayName("수정 대상이 존재하지 않아 0을 반환하면 ApiException 예외 발생")
+        fun redisServerInternalErrorThrowsApiException() {
+            // given
+            val userScore = ReaderBoardPlayer(1L, "player1", 100)
+
+            // when
+            Mockito.`when`(readerBoardRepository.increment(eq(key), eq(userScore.name), any()))
+                .thenReturn(0.0)
+            val ex = assertFailsWith<ApiException> { sut.updateScore(userScore) }
+
+            // then
+            val expected = ExceptionMessages.updateEntityNotExist("점수")
+            assertEquals(HttpStatus.BAD_REQUEST, ex.status)
+            assertEquals(expected, ex.message)
+        }
+
+        @Test
+        @DisplayName("점수 수정 성공 시 메세지 반환")
+        fun updateSuccessThenReturnMessage() {
+            // given
+            val savedUserScore = ReaderBoardPlayer(1L, "player1", 100)
+            val updateScore = 20
+
+            // when
+            Mockito.`when`(readerBoardRepository.increment(eq(key), eq(savedUserScore.name), any()))
+                .thenReturn(updateScore.toDouble())
+
+            // then
+            val actual = sut.updateScore(savedUserScore.copy(score = updateScore))
+            val expected = SuccessMessages.updateSuccess("점수")
+
+            assertEquals(expected, actual)
         }
     }
 

@@ -26,13 +26,15 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
     }
 
     fun updateScore(updatedPlayer: ReaderBoardPlayer): String {
-        val result = readerBoardRepository.increment("", updatedPlayer.name, 0.0)
+        require(updatedPlayer.name.isNotBlank()) { ExceptionMessages.isBlankName(updatedPlayer.id) }
 
-        if (result != 0.0) {
-            throw RuntimeException("서버 내부에서 오류가 발생했습니다.")
+        val result = readerBoardRepository.increment(key, updatedPlayer.name, 0.0)
+
+        if (result == 0.0) {
+            throw ApiException(HttpStatus.BAD_REQUEST, ExceptionMessages.updateEntityNotExist("점수"))
         }
 
-        return "${updatedPlayer.name}의 점수 수정 성공"
+        return SuccessMessages.updateSuccess("점수")
     }
 
     fun getTop5Scores(key: String): List<String> {
