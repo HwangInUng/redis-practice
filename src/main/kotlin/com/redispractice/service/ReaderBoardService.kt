@@ -6,7 +6,8 @@ import com.redispractice.repository.ReaderBoardRepository
 class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepository<ReaderBoardPlayer>) {
     fun registerAll(userAndScoreList: List<ReaderBoardPlayer>): String {
         val key = "reader-board:test"
-        val savedCount = readerBoardRepository.addAll(key, userAndScoreList) { it.score.toDouble() }
+        val savedCount =
+            readerBoardRepository.addAll(key, userAndScoreList, { it.name }, { it.score.toDouble() })
 
         if (savedCount == 0L) {
             throw RuntimeException("요청 데이터 중 일부가 누락되어 저장에 실패 하였습니다.")
@@ -25,11 +26,11 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
         return "${updatedPlayer.name}의 점수 수정 성공"
     }
 
-    fun getTop5Scores(key: String): List<ReaderBoardPlayer> {
-        return readerBoardRepository.top(key, 5)
+    fun getTop5Scores(key: String): List<String> {
+        return listOf("")
     }
 
-    fun getBottom5Scores(key: String): List<ReaderBoardPlayer> {
-        return readerBoardRepository.bottom(key, 5)
+    fun getBottom5Scores(key: String): List<String> {
+        return listOf("")
     }
 }
