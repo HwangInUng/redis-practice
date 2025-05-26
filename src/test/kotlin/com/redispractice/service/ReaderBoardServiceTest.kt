@@ -20,6 +20,7 @@ import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.springframework.data.redis.core.DefaultTypedTuple
 import org.springframework.http.HttpStatus
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -191,7 +192,7 @@ class ReaderBoardServiceTest {
         }
 
         @Test
-        @DisplayName("rankCount로 전달한 값만큼의 상위 점수 5명의 리스트 반환")
+        @DisplayName("전달받은 인자의 값만큼 상위 점수의 리스트 반환")
         fun getTopScoresEqualsRankCountToListSize() {
             // given
             val rankCount = 5L
@@ -211,7 +212,7 @@ class ReaderBoardServiceTest {
         }
 
         @Test
-        @DisplayName("하위 5명을 조회하며")
+        @DisplayName("전달받은 인자의 값만큼 하위 점수의 리스트를 반환")
         fun getBottomScoresEqualsRankCountToListSize() {
             // given
             val rankCount = 3L
@@ -228,6 +229,45 @@ class ReaderBoardServiceTest {
             assertEquals(rankCount, actual.size.toLong())
             assertTrue(sortedBottomScores.all { it.first in actual.map { it.keys.first() } })
             assertTrue(sortedBottomScores.all { it.second in actual.map { it.values.first() } })
+        }
+    }
+
+    @Nested
+    @DisplayName("리더보드 스코어 합산")
+    inner class UnionScore {
+        @Test
+        @DisplayName("합산 대상 키가 1개라도 Blank라면 IllegalArgumentException 발생")
+        fun unionWithScoresNullKeyThrowsIllegalArgumentException() {
+            // given
+            val otherKey = ""
+
+            // when
+            val ex = assertFailsWith<IllegalArgumentException> { sut.getSumScores(key, otherKey) }
+
+            // then
+            assertEquals(ExceptionMessages.NULL_INPUT, ex.message)
+        }
+
+        @Test
+        @DisplayName("반환된 데이터를 Map<String, Double?> 형태로 변환하여 반환")
+        fun returnValueConvertsToMap() {
+            // given
+            val otherKey = "reader-board:other"
+            val unionScores = listOf(
+                DefaultTypedTuple("player1", 100.0),
+                DefaultTypedTuple("player2", 130.0),
+            )
+
+            // when
+            Mockito.`when`(readerBoardRepository.unionWithScores(eq(key), eq(otherKey)))
+                .thenReturn(unionScores)
+
+            // then
+            val actual = sut.getSumScores(key, otherKey)
+
+            assertEquals(unionScores.size, actual.size)
+            assertTrue(unionScores.all { it.value in actual.map { it.keys.first() } })
+            assertTrue(unionScores.all { it.score in actual.map { it.values.first() } })
         }
     }
 }

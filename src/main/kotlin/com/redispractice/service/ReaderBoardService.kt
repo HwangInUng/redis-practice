@@ -47,4 +47,11 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
         val bottomScores = readerBoardRepository.bottom(key, rankCount)
         return bottomScores.map { mapOf(it.first.toString() to it.second) }
     }
+
+    fun getSumScores(key: String, otherKey: String): List<Map<String, Double?>> {
+        require(key.isNotBlank() && otherKey.isNotBlank()) { ExceptionMessages.NULL_INPUT }
+
+        return readerBoardRepository.unionWithScores(key, otherKey)
+            .map { mapOf(it.value.toString() to it.score) }
+    }
 }
