@@ -1,28 +1,28 @@
 package com.redispractice.fixtures
 
-import com.redispractice.domain.entity.ReaderBoardPlayer
+import com.redispractice.domain.entity.LeaderBoardPlayer
 
-object ReaderBoardPlayerFixtures {
+object LeaderBoardPlayerFixtures {
 
-    fun create(): ReaderBoardPlayer {
-        return ReaderBoardPlayer(
+    fun create(): LeaderBoardPlayer {
+        return LeaderBoardPlayer(
             id = 1L,
             name = "player1",
             score = 100
         )
     }
 
-    fun createWithScore(score: Int): ReaderBoardPlayer {
-        return ReaderBoardPlayer(
+    fun createWithScore(score: Int): LeaderBoardPlayer {
+        return LeaderBoardPlayer(
             id = 1L,
             name = "player1",
             score = score
         )
     }
 
-    fun createList(scores: List<Int>): List<ReaderBoardPlayer> {
+    fun createList(scores: List<Int>): List<LeaderBoardPlayer> {
         return scores.mapIndexed { index, score ->
-            ReaderBoardPlayer(
+            LeaderBoardPlayer(
                 id = index.toLong(),
                 name = "player$index",
                 score = score

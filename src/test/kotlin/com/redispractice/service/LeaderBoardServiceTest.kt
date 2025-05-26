@@ -1,14 +1,11 @@
 package com.redispractice.service
 
 import com.redispractice.common.SuccessMessages
-import com.redispractice.domain.entity.ReaderBoardPlayer
+import com.redispractice.domain.entity.LeaderBoardPlayer
 import com.redispractice.exception.ApiException
 import com.redispractice.exception.ExceptionMessages
-import com.redispractice.exception.NoWriteTestMethodException
-import com.redispractice.fixtures.ReaderBoardPlayerFixtures
-import com.redispractice.repository.ReaderBoardRepository
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
+import com.redispractice.fixtures.LeaderBoardPlayerFixtures
+import com.redispractice.repository.LeaderBoardRepository
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -30,13 +27,13 @@ import kotlin.test.assertTrue
 // PER_CLASS는 모든 테스트에서 공유되는 인스턴스를 사용하기 때문에 각 테스트 케이스에서 의도하지 않은 상태를 공유할 수 있음
 // 메서드마다 상태가 초기화되어야 한다면 PER_METHOD를 사용하여 각 테스트마다 새로운 인스턴스를 생성
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-class ReaderBoardServiceTest {
+class LeaderBoardServiceTest {
     @InjectMocks
-    private lateinit var sut: ReaderBoardService
+    private lateinit var sut: LeaderBoardService
 
     @Mock(lenient = true)
-    private lateinit var readerBoardRepository: ReaderBoardRepository<ReaderBoardPlayer>
-    private val key = "reader-board:test"
+    private lateinit var leaderBoardRepository: LeaderBoardRepository<LeaderBoardPlayer>
+    private val key = "Leader-board:test"
 
     // Kotlin에서 @Nested를 사용하려면 inner class를 반드시 명시
     // Kotlin의 중첩 클래스는 기본적으로 static이기 때문에 외부 클래스의 인스턴에서 접근 불가능
@@ -50,7 +47,7 @@ class ReaderBoardServiceTest {
         @DisplayName("요청 데이터가 비어있으면 IllegalArgumentException을 발생")
         fun emptyListInputThrowsIllegalArgumentExceptionWithBAD_REQUEST() {
             // given
-            val emptyData = emptyList<ReaderBoardPlayer>();
+            val emptyData = emptyList<LeaderBoardPlayer>();
 
             // when
             val actual = assertFailsWith<IllegalArgumentException> { sut.registerAll(emptyData) };
@@ -65,9 +62,9 @@ class ReaderBoardServiceTest {
         fun someDataNameIsBlankThrowsIllegalArgumentException() {
             // given
             val userScoreListWithNameBlank = listOf(
-                ReaderBoardPlayer(1L, "player1", 100),
-                ReaderBoardPlayer(2L, "", 130),
-                ReaderBoardPlayer(3L, "player3", 90),
+                LeaderBoardPlayer(1L, "player1", 100),
+                LeaderBoardPlayer(2L, "", 130),
+                LeaderBoardPlayer(3L, "player3", 90),
             )
             val blankId = 2L
 
@@ -83,10 +80,10 @@ class ReaderBoardServiceTest {
         @DisplayName("반환 값이 0이면 ApiException을 발생")
         fun returnValueZeroThrowsApiExceptionWithBAD_REQEUST() {
             // given
-            val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150))
+            val userScoreList = LeaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150))
 
             // when
-            Mockito.`when`(readerBoardRepository.addAll(eq(key), eq(userScoreList), any(), any()))
+            Mockito.`when`(leaderBoardRepository.addAll(eq(key), eq(userScoreList), any(), any()))
                 .thenReturn(0L)
             val ex = assertFailsWith<ApiException> { sut.registerAll(userScoreList) }
 
@@ -100,10 +97,10 @@ class ReaderBoardServiceTest {
         @DisplayName("사용자 점수 등록 후 반환받은 값이 인자로 전달된 List의 크기와 같으면 성공 후 메세지 반환")
         fun registerUserScores() {
             // given
-            val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150))
+            val userScoreList = LeaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150))
 
             // when
-            Mockito.`when`(readerBoardRepository.addAll(eq(key), eq(userScoreList), any(), any()))
+            Mockito.`when`(leaderBoardRepository.addAll(eq(key), eq(userScoreList), any(), any()))
                 .thenReturn(userScoreList.size.toLong())
             val result = sut.registerAll(userScoreList);
 
@@ -121,7 +118,7 @@ class ReaderBoardServiceTest {
         @DisplayName("사용자의 이름이 blank인 경우 IllegalArgumentException 발생")
         fun userNameIsBlankThrowsIllegalArgumentException() {
             // given
-            val userScore = ReaderBoardPlayer(1L, "", 100)
+            val userScore = LeaderBoardPlayer(1L, "", 100)
 
             // when
             val actual = assertFailsWith<IllegalArgumentException> { sut.updateScore(userScore) }
@@ -135,10 +132,10 @@ class ReaderBoardServiceTest {
         @DisplayName("수정 대상이 존재하지 않아도 null을 반환하면 ApiException 예외 발생")
         fun notExistsUpdateTargetThrowsApiException() {
             // given
-            val userScore = ReaderBoardPlayer(1L, "player1", 100)
+            val userScore = LeaderBoardPlayer(1L, "player1", 100)
 
             // when
-            Mockito.`when`(readerBoardRepository.score(eq(key), eq(userScore.name)))
+            Mockito.`when`(leaderBoardRepository.score(eq(key), eq(userScore.name)))
                 .thenReturn(null)
             val ex = assertFailsWith<ApiException> { sut.updateScore(userScore) }
 
@@ -152,11 +149,11 @@ class ReaderBoardServiceTest {
         @DisplayName("점수 수정 성공 시 메세지 반환")
         fun updateSuccessThenReturnMessage() {
             // given
-            val savedUserScore = ReaderBoardPlayer(1L, "player1", 100)
+            val savedUserScore = LeaderBoardPlayer(1L, "player1", 100)
             val updateScore = 20
 
             // when
-            Mockito.`when`(readerBoardRepository.increment(eq(key), eq(savedUserScore.name), any()))
+            Mockito.`when`(leaderBoardRepository.increment(eq(key), eq(savedUserScore.name), any()))
                 .thenReturn(updateScore.toDouble())
 
             // then
@@ -179,9 +176,9 @@ class ReaderBoardServiceTest {
             val rankCount = 5L
 
             // when
-            Mockito.`when`(readerBoardRepository.top(eq(key), any()))
+            Mockito.`when`(leaderBoardRepository.top(eq(key), any()))
                 .thenReturn(emptyList)
-            Mockito.`when`(readerBoardRepository.bottom(eq(key), any()))
+            Mockito.`when`(leaderBoardRepository.bottom(eq(key), any()))
                 .thenReturn(emptyList)
 
             // then
@@ -196,12 +193,12 @@ class ReaderBoardServiceTest {
         fun getTopScoresEqualsRankCountToListSize() {
             // given
             val rankCount = 5L
-            val reverseSortedTopScores = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150, 130))
+            val reverseSortedTopScores = LeaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150, 130))
                 .map { it.name to it.score.toDouble() }
                 .sortedByDescending { it.second }
 
             // when
-            Mockito.`when`(readerBoardRepository.top(eq(key), any()))
+            Mockito.`when`(leaderBoardRepository.top(eq(key), any()))
                 .thenReturn(reverseSortedTopScores)
 
             // then
@@ -216,12 +213,12 @@ class ReaderBoardServiceTest {
         fun getBottomScoresEqualsRankCountToListSize() {
             // given
             val rankCount = 3L
-            val sortedBottomScores = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90))
+            val sortedBottomScores = LeaderBoardPlayerFixtures.createList(listOf(100, 120, 90))
                 .map { it.name to it.score.toDouble() }
                 .sortedBy { it.second }
 
             // when
-            Mockito.`when`(readerBoardRepository.bottom(eq(key), any()))
+            Mockito.`when`(leaderBoardRepository.bottom(eq(key), any()))
                 .thenReturn(sortedBottomScores)
 
             // then
@@ -259,7 +256,7 @@ class ReaderBoardServiceTest {
             )
 
             // when
-            Mockito.`when`(readerBoardRepository.unionWithScores(eq(key), eq(otherKey)))
+            Mockito.`when`(leaderBoardRepository.unionWithScores(eq(key), eq(otherKey)))
                 .thenReturn(unionScores)
 
             // then

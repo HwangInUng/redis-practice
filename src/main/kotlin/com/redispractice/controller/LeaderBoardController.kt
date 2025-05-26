@@ -1,18 +1,18 @@
 package com.redispractice.controller
 
-import com.redispractice.domain.entity.ReaderBoardPlayer
+import com.redispractice.domain.entity.LeaderBoardPlayer
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@RequestMapping("/api/reader-board")
+@RequestMapping("/api/Leader-board")
 @RestController
-class ReaderBoardController {
+class LeaderBoardController {
 
     @GetMapping("/total-score")
-    fun getTotalScoreReaderBoard(): ResponseEntity<List<ReaderBoardPlayer>> {
+    fun getTotalScoreLeaderBoard(): ResponseEntity<List<LeaderBoardPlayer>> {
         return ResponseEntity.ok(null);
     }
 

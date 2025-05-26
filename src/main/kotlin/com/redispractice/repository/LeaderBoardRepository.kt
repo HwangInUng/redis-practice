@@ -1,24 +1,19 @@
 package com.redispractice.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.redispractice.domain.entity.ReaderBoardPlayer
 import com.redispractice.exception.ApiException
 import com.redispractice.exception.ExceptionMessages
 import org.springframework.data.redis.core.DefaultTypedTuple
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.data.redis.core.ZSetOperations
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple
 import org.springframework.http.HttpStatus
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
-class ReaderBoardRepository<T : Any>(
+class LeaderBoardRepository<T : Any>(
     private val redisTemplate: RedisTemplate<String, String>,
     private val objectMapper: ObjectMapper,
     private val clazz: Class<T>,
 ) {
     private val ops = redisTemplate.opsForZSet()
-
 
     private fun serialize(value: T): String =
         objectMapper.writeValueAsString(value)
