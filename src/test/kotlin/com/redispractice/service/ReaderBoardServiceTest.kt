@@ -171,21 +171,63 @@ class ReaderBoardServiceTest {
     inner class getScores {
 
         @Test
-        @DisplayName("조회 대상이 비어있는 경우")
-        fun test1() {
-            throw NoWriteTestMethodException()
+        @DisplayName("조회 대상이 비어있는 경우 빈 리스트 반환")
+        fun returnValueIsNullThenEmptyList() {
+            // given
+            val emptyList = emptyList<Pair<String?, Double>>()
+            val rankCount = 5L
+
+            // when
+            Mockito.`when`(readerBoardRepository.top(eq(key), any()))
+                .thenReturn(emptyList)
+            Mockito.`when`(readerBoardRepository.bottom(eq(key), any()))
+                .thenReturn(emptyList)
+
+            // then
+            val topActual = sut.getTopScores(key, rankCount)
+            val bottomActual = sut.getBottomScores(key, rankCount)
+            assertTrue(topActual.isEmpty())
+            assertTrue(bottomActual.isEmpty())
         }
 
         @Test
-        @DisplayName("상위 5명을 조회")
-        fun test2() {
-            throw NoWriteTestMethodException()
+        @DisplayName("rankCount로 전달한 값만큼의 상위 점수 5명의 리스트 반환")
+        fun getTopScoresEqualsRankCountToListSize() {
+            // given
+            val rankCount = 5L
+            val reverseSortedTopScores = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150, 130))
+                .map { it.name to it.score.toDouble() }
+                .sortedByDescending { it.second }
+
+            // when
+            Mockito.`when`(readerBoardRepository.top(eq(key), any()))
+                .thenReturn(reverseSortedTopScores)
+
+            // then
+            val actual = sut.getTopScores(key, rankCount)
+            assertEquals(rankCount, actual.size.toLong())
+            assertTrue(reverseSortedTopScores.all { it.first in actual.map { it.keys.first() } })
+            assertTrue(reverseSortedTopScores.all { it.second in actual.map { it.values.first() } })
         }
 
         @Test
         @DisplayName("하위 5명을 조회하며")
-        fun test3() {
-            throw NoWriteTestMethodException()
+        fun getBottomScoresEqualsRankCountToListSize() {
+            // given
+            val rankCount = 3L
+            val sortedBottomScores = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90))
+                .map { it.name to it.score.toDouble() }
+                .sortedBy { it.second }
+
+            // when
+            Mockito.`when`(readerBoardRepository.bottom(eq(key), any()))
+                .thenReturn(sortedBottomScores)
+
+            // then
+            val actual = sut.getBottomScores(key, rankCount)
+            assertEquals(rankCount, actual.size.toLong())
+            assertTrue(sortedBottomScores.all { it.first in actual.map { it.keys.first() } })
+            assertTrue(sortedBottomScores.all { it.second in actual.map { it.values.first() } })
         }
     }
 }

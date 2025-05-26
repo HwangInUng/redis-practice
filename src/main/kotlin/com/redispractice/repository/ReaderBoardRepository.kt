@@ -6,6 +6,7 @@ import com.redispractice.exception.ApiException
 import com.redispractice.exception.ExceptionMessages
 import org.springframework.data.redis.core.DefaultTypedTuple
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ZSetOperations
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple
 import org.springframework.http.HttpStatus
 import java.time.LocalDate

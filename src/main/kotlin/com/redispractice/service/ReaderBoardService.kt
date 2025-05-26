@@ -38,11 +38,13 @@ class ReaderBoardService(private val readerBoardRepository: ReaderBoardRepositor
         return SuccessMessages.updateSuccess("점수")
     }
 
-    fun getTop5Scores(key: String): List<String> {
-        return listOf("")
+    fun getTopScores(key: String, rankCount: Long): List<Map<String, Double>> {
+        val topScores = readerBoardRepository.top(key, rankCount)
+        return topScores.map { mapOf(it.first.toString() to it.second) }
     }
 
-    fun getBottom5Scores(key: String): List<String> {
-        return listOf("")
+    fun getBottomScores(key: String, rankCount: Long): List<Map<String, Double>> {
+        val bottomScores = readerBoardRepository.bottom(key, rankCount)
+        return bottomScores.map { mapOf(it.first.toString() to it.second) }
     }
 }
