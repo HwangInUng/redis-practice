@@ -1,6 +1,7 @@
 package com.redispractice.exception
 
 object ExceptionMessages {
+    const val NULL_INPUT = "요청 데이터는 null일 수 없습니다."
     const val EMPTY_INPUT = "요청 데이터는 비어 있을 수 없습니다."
     const val INTERNAL_SERVER_ERROR = "서버 내부에서 오류가 발생했습니다."
 

@@ -35,6 +35,17 @@ class ReaderBoardRepositoryTest {
         redisTemplate.delete(key)
     }
 
+    private fun addOneToKey(key: String, userAndScore: ReaderBoardPlayer): Boolean {
+        return readerBoardRepository.add(key, userAndScore.name, userAndScore.score.toDouble())
+    }
+
+    private fun addAllToKey(
+        key: String,
+        userAndScoreList: List<ReaderBoardPlayer>,
+    ): Long {
+        return readerBoardRepository.addAll(key, userAndScoreList, { it.name }, { it.score.toDouble() })
+    }
+
     @Test
     @DisplayName("단일 사용자 점수 저장")
     fun addSingleData() {
@@ -42,7 +53,7 @@ class ReaderBoardRepositoryTest {
         val userAndScore = ReaderBoardPlayerFixtures.create()
 
         // when
-        val result = readerBoardRepository.add(key, userAndScore.name, userAndScore.score.toDouble())
+        val result = addOneToKey(key, userAndScore)
 
         // then
         assertTrue(result)
@@ -55,7 +66,7 @@ class ReaderBoardRepositoryTest {
         val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 130))
 
         // when
-        val result = readerBoardRepository.addAll(key, userScoreList, { it.name }, { it.score.toDouble() })
+        val result = addAllToKey(key, userScoreList)
 
         // then
         val expected = userScoreList.size.toLong()
@@ -68,7 +79,7 @@ class ReaderBoardRepositoryTest {
         // given
         val readerBoardPlayer = ReaderBoardPlayerFixtures.createWithScore(100)
         val updateScore = 10.0
-        readerBoardRepository.add(key, readerBoardPlayer.name, readerBoardPlayer.score.toDouble())
+        addOneToKey(key, readerBoardPlayer)
 
         // when
         val result = readerBoardRepository.increment(key, readerBoardPlayer.name, updateScore)
@@ -83,7 +94,7 @@ class ReaderBoardRepositoryTest {
     fun deleteUser() {
         // given
         val readerBoardPlayerList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 130))
-        readerBoardRepository.addAll(key, readerBoardPlayerList, { it.name }, { it.score.toDouble() })
+        addAllToKey(key, readerBoardPlayerList)
 
         // when
         val result = readerBoardRepository.delete(key, readerBoardPlayerList[1].name)
@@ -101,7 +112,7 @@ class ReaderBoardRepositoryTest {
         @BeforeEach
         fun setUp() {
             val userScoreList = ReaderBoardPlayerFixtures.createList(scoreList)
-            readerBoardRepository.addAll(key, userScoreList, { it.name }, { it.score.toDouble() })
+            addAllToKey(key, userScoreList)
         }
 
         @Test
@@ -155,9 +166,9 @@ class ReaderBoardRepositoryTest {
             // given
             val userScore = ReaderBoardPlayer(1L, "player1", 100)
             val otherUser = "player2"
+            addOneToKey(key, userScore)
 
             // when
-            readerBoardRepository.add(key, userScore.name, userScore.score.toDouble())
             val result = readerBoardRepository.score(key, otherUser)
 
             // then
@@ -169,13 +180,98 @@ class ReaderBoardRepositoryTest {
         fun existsMemberThenReturnScore() {
             // given
             val userScore = ReaderBoardPlayer(1L, "player1", 100)
+            addOneToKey(key, userScore)
 
             // when
-            readerBoardRepository.add(key, userScore.name, userScore.score.toDouble())
             val result = readerBoardRepository.score(key, userScore.name)
 
             // then
             assertEquals(userScore.score.toDouble(), result)
+        }
+    }
+
+    @Nested
+    @DisplayName("리더보드 합집합")
+    inner class BasicUnionReaderBoard {
+        private val otherKey = "reader:test2"
+
+        @AfterEach
+        fun cleanUp() {
+            redisTemplate.delete(otherKey)
+        }
+
+        @Test
+        @DisplayName("집합 내 동일한 member가 존재하면 합산된 스코어로 반환")
+        fun unionWithScoresSameValue() {
+            // given
+            val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 130))
+            val otherUserScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 150))
+            addAllToKey(key, userScoreList)
+            addAllToKey(otherKey, otherUserScoreList)
+
+            // when
+            val actual = readerBoardRepository.unionWithScores(key, otherKey)
+
+            // then
+            // 동일한 이름의 유저가 있을 경우, 스코어는 합산되어야 함
+            val expectedList = (userScoreList + otherUserScoreList)
+                .groupBy { it.name }
+                .map { (_, players) ->
+                    players.first().copy(score = players.sumOf { it.score })
+                }
+            val expectedNameSet = expectedList.map { it.name }.toSet()
+            val expectedScoreSet = expectedList.map { it.score.toDouble() }.toSet()
+
+            val actualValueSet = actual.map { it.value }.toSet()
+            val actualScoreSet = actual.map { it.score }.toSet()
+
+            assertEquals(expectedNameSet, actualValueSet)
+            assertEquals(expectedScoreSet, actualScoreSet)
+        }
+
+        @Test
+        @DisplayName("집합 대상 키 중 존재하지 않는 키가 있는 경우 있는 존재하는 값의 집합만 반환")
+        fun unionWithNonExistentKey() {
+            // given
+            val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 130))
+            addAllToKey(key, userScoreList)
+
+            // when
+            val actual = readerBoardRepository.unionWithScores(key, otherKey)
+
+            // then
+            val expectedNameSet = userScoreList.map { it.name }.toSet()
+            val expectedScoreSet = userScoreList.map { it.score.toDouble() }.toSet()
+
+            val actualValueSet = actual.map { it.value }.toSet()
+            val actualScoreSet = actual.map { it.score }.toSet()
+
+            assertEquals(expectedNameSet, actualValueSet)
+            assertEquals(expectedScoreSet, actualScoreSet)
+        }
+
+        @Test
+        @DisplayName("두 개의 합집합 결과를 반환")
+        fun unionOfTwoSets() {
+            // given
+            val userScoreList = ReaderBoardPlayerFixtures.createList(listOf(100, 90, 130, 110, 120, 140))
+            val aList = userScoreList.subList(0, userScoreList.size / 2)
+            val bList = userScoreList.subList(userScoreList.size / 2, userScoreList.size)
+            addAllToKey(key, aList)
+            addAllToKey(otherKey, bList)
+
+            // when
+            val actual = readerBoardRepository.unionWithScores(key, otherKey)
+
+            // then
+            val expectedNameSet = userScoreList.map { it.name }.toSet()
+            val expectedScoreSet = userScoreList.map { it.score.toDouble() }.toSet()
+
+            val actualNameSet = actual.map { it.value }.toSet()
+            val actualScoreSet = actual.map { it.score }.toSet()
+
+            assertEquals(expectedNameSet, actualNameSet)
+            assertEquals(expectedScoreSet, actualScoreSet)
         }
     }
 }

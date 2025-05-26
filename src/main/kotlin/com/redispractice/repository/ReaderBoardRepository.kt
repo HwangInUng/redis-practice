@@ -6,6 +6,7 @@ import com.redispractice.exception.ApiException
 import com.redispractice.exception.ExceptionMessages
 import org.springframework.data.redis.core.DefaultTypedTuple
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ZSetOperations
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
@@ -72,5 +73,25 @@ class ReaderBoardRepository<T : Any>(
 
     fun score(key: String, value: String): Double? {
         return ops.score(key, value)
+    }
+
+    // 각 스코어가 합산되지 않고, 원래 집합의 스코어로 반환
+    fun unionWithScores(key: String, otherKey: String): List<TypedTuple<String>> {
+        return ops.unionWithScores(key, otherKey)
+            ?.map { DefaultTypedTuple(it.value, it.score ?: 0.0) }
+            ?: emptyList()
+    }
+
+    // 스코어가 합산되어 새로운 집합에 저장됨
+    fun unionAndStore(
+        key: String,
+        otherKey: String,
+        destinationKey: String
+    ): Long {
+        return ops.unionAndStore(key, otherKey, destinationKey)
+            ?: throw ApiException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ExceptionMessages.INTERNAL_SERVER_ERROR
+            )
     }
 }

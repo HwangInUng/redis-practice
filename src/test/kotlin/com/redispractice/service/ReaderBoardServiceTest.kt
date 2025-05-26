@@ -20,6 +20,7 @@ import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.springframework.data.redis.core.DefaultTypedTuple
 import org.springframework.http.HttpStatus
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -171,21 +172,102 @@ class ReaderBoardServiceTest {
     inner class getScores {
 
         @Test
-        @DisplayName("조회 대상이 비어있는 경우")
-        fun test1() {
-            throw NoWriteTestMethodException()
+        @DisplayName("조회 대상이 비어있는 경우 빈 리스트 반환")
+        fun returnValueIsNullThenEmptyList() {
+            // given
+            val emptyList = emptyList<Pair<String?, Double>>()
+            val rankCount = 5L
+
+            // when
+            Mockito.`when`(readerBoardRepository.top(eq(key), any()))
+                .thenReturn(emptyList)
+            Mockito.`when`(readerBoardRepository.bottom(eq(key), any()))
+                .thenReturn(emptyList)
+
+            // then
+            val topActual = sut.getTopScores(key, rankCount)
+            val bottomActual = sut.getBottomScores(key, rankCount)
+            assertTrue(topActual.isEmpty())
+            assertTrue(bottomActual.isEmpty())
         }
 
         @Test
-        @DisplayName("상위 5명을 조회")
-        fun test2() {
-            throw NoWriteTestMethodException()
+        @DisplayName("전달받은 인자의 값만큼 상위 점수의 리스트 반환")
+        fun getTopScoresEqualsRankCountToListSize() {
+            // given
+            val rankCount = 5L
+            val reverseSortedTopScores = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90, 150, 130))
+                .map { it.name to it.score.toDouble() }
+                .sortedByDescending { it.second }
+
+            // when
+            Mockito.`when`(readerBoardRepository.top(eq(key), any()))
+                .thenReturn(reverseSortedTopScores)
+
+            // then
+            val actual = sut.getTopScores(key, rankCount)
+            assertEquals(rankCount, actual.size.toLong())
+            assertTrue(reverseSortedTopScores.all { it.first in actual.map { it.keys.first() } })
+            assertTrue(reverseSortedTopScores.all { it.second in actual.map { it.values.first() } })
         }
 
         @Test
-        @DisplayName("하위 5명을 조회하며")
-        fun test3() {
-            throw NoWriteTestMethodException()
+        @DisplayName("전달받은 인자의 값만큼 하위 점수의 리스트를 반환")
+        fun getBottomScoresEqualsRankCountToListSize() {
+            // given
+            val rankCount = 3L
+            val sortedBottomScores = ReaderBoardPlayerFixtures.createList(listOf(100, 120, 90))
+                .map { it.name to it.score.toDouble() }
+                .sortedBy { it.second }
+
+            // when
+            Mockito.`when`(readerBoardRepository.bottom(eq(key), any()))
+                .thenReturn(sortedBottomScores)
+
+            // then
+            val actual = sut.getBottomScores(key, rankCount)
+            assertEquals(rankCount, actual.size.toLong())
+            assertTrue(sortedBottomScores.all { it.first in actual.map { it.keys.first() } })
+            assertTrue(sortedBottomScores.all { it.second in actual.map { it.values.first() } })
+        }
+    }
+
+    @Nested
+    @DisplayName("리더보드 스코어 합산")
+    inner class UnionScore {
+        @Test
+        @DisplayName("합산 대상 키가 1개라도 Blank라면 IllegalArgumentException 발생")
+        fun unionWithScoresNullKeyThrowsIllegalArgumentException() {
+            // given
+            val otherKey = ""
+
+            // when
+            val ex = assertFailsWith<IllegalArgumentException> { sut.getSumScores(key, otherKey) }
+
+            // then
+            assertEquals(ExceptionMessages.NULL_INPUT, ex.message)
+        }
+
+        @Test
+        @DisplayName("반환된 데이터를 Map<String, Double?> 형태로 변환하여 반환")
+        fun returnValueConvertsToMap() {
+            // given
+            val otherKey = "reader-board:other"
+            val unionScores = listOf(
+                DefaultTypedTuple("player1", 100.0),
+                DefaultTypedTuple("player2", 130.0),
+            )
+
+            // when
+            Mockito.`when`(readerBoardRepository.unionWithScores(eq(key), eq(otherKey)))
+                .thenReturn(unionScores)
+
+            // then
+            val actual = sut.getSumScores(key, otherKey)
+
+            assertEquals(unionScores.size, actual.size)
+            assertTrue(unionScores.all { it.value in actual.map { it.keys.first() } })
+            assertTrue(unionScores.all { it.score in actual.map { it.values.first() } })
         }
     }
 }
