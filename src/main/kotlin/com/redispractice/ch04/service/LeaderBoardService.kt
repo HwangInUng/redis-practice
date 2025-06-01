@@ -1,5 +1,9 @@
-package com.redispractice.ch04
+package com.redispractice.ch04.service
 
+import com.redispractice.ch04.domain.LeaderBoardPlayer
+import com.redispractice.ch04.exception.ApiException
+import com.redispractice.ch04.repository.LeaderBoardRepository
+import com.redispractice.common.ExceptionMessages
 import com.redispractice.common.SuccessMessages
 import org.springframework.http.HttpStatus
 

@@ -1,5 +1,6 @@
-package com.redispractice.ch04
+package com.redispractice.ch04.controller
 
+import com.redispractice.ch04.domain.LeaderBoardPlayer
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping

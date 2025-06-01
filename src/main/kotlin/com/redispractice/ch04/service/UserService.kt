@@ -1,6 +1,7 @@
-package com.redispractice.ch04
+package com.redispractice.ch04.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.redispractice.ch04.entity.User
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 

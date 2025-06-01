@@ -1,6 +1,6 @@
 package com.redispractice.ch04.fixtures
 
-import com.redispractice.ch04.LeaderBoardPlayer
+import com.redispractice.ch04.domain.LeaderBoardPlayer
 
 object LeaderBoardPlayerFixtures {
 

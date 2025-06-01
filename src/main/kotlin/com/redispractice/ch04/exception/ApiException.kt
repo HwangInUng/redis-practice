@@ -1,4 +1,4 @@
-package com.redispractice.ch04
+package com.redispractice.ch04.exception
 
 import org.springframework.http.HttpStatus
 

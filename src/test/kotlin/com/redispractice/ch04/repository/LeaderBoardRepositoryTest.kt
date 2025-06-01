@@ -1,8 +1,7 @@
 package com.redispractice.ch04.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.redispractice.ch04.LeaderBoardRepository
-import com.redispractice.ch04.LeaderBoardPlayer
+import com.redispractice.ch04.domain.LeaderBoardPlayer
 import com.redispractice.ch04.fixtures.LeaderBoardPlayerFixtures
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
