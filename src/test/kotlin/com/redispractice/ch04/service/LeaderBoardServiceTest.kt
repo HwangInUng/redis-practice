@@ -1,11 +1,12 @@
-package com.redispractice.service
+package com.redispractice.ch04.service
 
 import com.redispractice.common.SuccessMessages
-import com.redispractice.domain.entity.LeaderBoardPlayer
-import com.redispractice.exception.ApiException
-import com.redispractice.exception.ExceptionMessages
-import com.redispractice.fixtures.LeaderBoardPlayerFixtures
-import com.redispractice.repository.LeaderBoardRepository
+import com.redispractice.ch04.LeaderBoardPlayer
+import com.redispractice.ch04.ApiException
+import com.redispractice.ch04.ExceptionMessages
+import com.redispractice.ch04.fixtures.LeaderBoardPlayerFixtures
+import com.redispractice.ch04.LeaderBoardRepository
+import com.redispractice.ch04.LeaderBoardService
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

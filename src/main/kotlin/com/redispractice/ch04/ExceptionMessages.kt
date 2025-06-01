@@ -1,4 +1,4 @@
-package com.redispractice.exception
+package com.redispractice.ch04
 
 object ExceptionMessages {
     const val NULL_INPUT = "요청 데이터는 null일 수 없습니다."

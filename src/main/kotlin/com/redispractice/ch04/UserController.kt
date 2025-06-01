@@ -1,7 +1,5 @@
-package com.redispractice.controller
+package com.redispractice.ch04
 
-import com.redispractice.domain.entity.User
-import com.redispractice.service.UserService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody

@@ -1,4 +1,4 @@
-package com.redispractice.domain.entity
+package com.redispractice.ch04
 
 data class LeaderBoardPlayer(
     val id: Long,

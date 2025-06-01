@@ -1,8 +1,6 @@
-package com.redispractice.repository
+package com.redispractice.ch04
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.redispractice.exception.ApiException
-import com.redispractice.exception.ExceptionMessages
 import org.springframework.data.redis.core.DefaultTypedTuple
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple

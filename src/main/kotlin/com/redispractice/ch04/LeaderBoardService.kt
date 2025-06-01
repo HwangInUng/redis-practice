@@ -1,10 +1,6 @@
-package com.redispractice.service
+package com.redispractice.ch04
 
 import com.redispractice.common.SuccessMessages
-import com.redispractice.domain.entity.LeaderBoardPlayer
-import com.redispractice.exception.ApiException
-import com.redispractice.exception.ExceptionMessages
-import com.redispractice.repository.LeaderBoardRepository
 import org.springframework.http.HttpStatus
 
 class LeaderBoardService(private val leaderBoardRepository: LeaderBoardRepository<LeaderBoardPlayer>) {
